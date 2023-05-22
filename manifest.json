@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "Realt Hide extension",
+  "version": "1.0.0",
+
+  "action":{
+    "default_icon": "logo192.png",
+    "default_title": "Realt Hide extension",
+    "default_popup": "index.html"
+  },
+  "description": "Hide uninteresting realt offers",
+
+  "author": "Kudryavtsev Sergey <invaderman@mail.ru>",
+  "content_scripts": [
+    {
+      "matches": ["https://realt.by/sale/cottages/map/*"],
+      "js": ["src/main.jsx"]
+    }
+  ],
+  "permissions": [
+    "storage"
+  ]
+}
