@@ -1,14 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import HideOfferIcon from './HideOfferIcon';
-import debounce from 'lodash.debounce';
 
 function insertAfter(newNode, existingNode) {
   existingNode.parentNode.insertBefore(newNode, existingNode.nextSibling);
 }
 
 const render = () => {
-  console.log(1);
   const favorites = document.querySelectorAll(`[id^="favorite"]`);
 
   favorites.forEach((favorite) => {
@@ -19,27 +17,19 @@ const render = () => {
 
     const rootId = `root-${offerId}`;
 
-    let root = document.querySelector(`#${rootId}`);
-    if (!root) {
-      root = document.createElement('div');
+    if (!document.querySelector(`#${rootId}`)) {
+      const root = document.createElement('div');
       root.id = rootId;
 
       insertAfter(root, favorite.parentNode.parentNode);
-    }
 
-    createRoot(root).render(
-      <React.StrictMode>
-        <HideOfferIcon block={block} offerId={offerId} href={href} />
-      </React.StrictMode>,
-    );
+      createRoot(root).render(
+        <React.StrictMode>
+          <HideOfferIcon block={block} offerId={offerId} href={href} />
+        </React.StrictMode>,
+      );
+    }
   });
 };
 
-const debounceRender = debounce(render, 2000);
-
-debounceRender();
-
-const holder = document.querySelector('#holder');
-holder.addEventListener('DOMSubtreeModified', debounceRender, false);
-const pages = document.querySelector('.empty\\:hidden');
-pages.addEventListener('DOMSubtreeModified', debounceRender, false);
+setInterval(render, 3000);
