@@ -17,6 +17,33 @@ const App = () => {
     setHideOffers({});
   }, [setHideOffers]);
 
+  const exportAll = useCallback(async () => {
+    const { value } = await useChromeLocalStorage('hide-offers', {});
+
+    const jsonString = `data:text/json;chatset=utf-8,${encodeURIComponent(JSON.stringify(value))}`;
+    const link = document.createElement('a');
+    link.href = jsonString;
+    link.download = 'data.json';
+    link.click();
+  }, []);
+
+  const importAll = useCallback(({ target }) => {
+    if (!target.files) {
+      return;
+    }
+    const fileReader = new FileReader();
+    fileReader.readAsText(target.files[0], 'UTF-8');
+    fileReader.onload = async ({ target }) => {
+      if (!target.result) {
+        return;
+      }
+      const data = JSON.parse(target.result);
+      const { set } = await useChromeLocalStorage('hide-offers', {});
+      await set(data);
+      setHideOffers(data);
+    };
+  }, [setHideOffers]);
+
   useEffect(() => {
     useChromeLocalStorage('hide-offers', {}).then(({ value }) => {
       setHideOffers(value);
@@ -46,18 +73,21 @@ const App = () => {
           </td>
         </tr>
       ))}
-      {Object.keys(hideOffers).length > 0 && (
-        <tr>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>&nbsp;</td>
-          <td>
-            <button onClick={removeAll}>
-              remove all
-            </button>
-          </td>
-        </tr>
-      )}
+      <tr>
+        <td>
+          <button onClick={exportAll}>
+            export
+          </button>
+        </td>
+        <td colSpan={2}>
+          <input type="file" onChange={importAll} />
+        </td>
+        <td>
+          <button onClick={removeAll}>
+            remove&nbsp;all
+          </button>
+        </td>
+      </tr>
       </tbody>
     </table>
   );
