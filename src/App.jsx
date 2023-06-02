@@ -1,21 +1,57 @@
 import useChromeLocalStorage from './useChromeLocalStorage';
 import { useCallback, useEffect, useState } from 'react';
+import SortIcon from './SortIcon';
 
 const App = () => {
-  const [hideOffers, setHideOffers] = useState({});
+  const [hideOffers, setHideOffers] = useState([]);
+  const [orderBy, setOrderBy] = useState('createdAt');
+  const [direction, setDirection] = useState(false);
+
+  const generateList = useCallback((items) => {
+    const data = Object.entries(items).map(([offerId, { href, createdAt }]) => ({
+      offerId: Number.parseInt(offerId),
+      href,
+      createdAt,
+    }));
+
+    data.sort((a, b) => {
+      if (a[orderBy] < b[orderBy]) {
+        return direction ? -1 : 1;
+      }
+      if (a[orderBy] > b[orderBy]) {
+        return !direction ? -1 : 1;
+      }
+      return 0;
+    });
+
+    setHideOffers(data);
+  }, [setHideOffers, orderBy, direction]);
+
+  const changeOrder = useCallback(async (key) => {
+    const { value } = await useChromeLocalStorage('hide-offers', {});
+
+    if (orderBy !== key) {
+      setOrderBy(key);
+      setDirection(true);
+    } else {
+      setDirection(!direction);
+    }
+
+    generateList(value);
+  }, [hideOffers, setHideOffers, orderBy, setOrderBy, direction, setDirection]);
 
   const remove = useCallback(async (offerId) => {
     const { value, set } = await useChromeLocalStorage('hide-offers', {});
     delete value[offerId];
     await set(value);
-    setHideOffers(value);
-  }, [setHideOffers]);
+    generateList(value);
+  }, [generateList]);
 
   const removeAll = useCallback(async () => {
     const { remove } = await useChromeLocalStorage('hide-offers', {});
     await remove();
-    setHideOffers({});
-  }, [setHideOffers]);
+    generateList({});
+  }, [generateList]);
 
   const exportAll = useCallback(async () => {
     const { value } = await useChromeLocalStorage('hide-offers', {});
@@ -40,28 +76,34 @@ const App = () => {
       const data = JSON.parse(target.result);
       const { set } = await useChromeLocalStorage('hide-offers', {});
       await set(data);
-      setHideOffers(data);
+      generateList(data);
     };
-  }, [setHideOffers]);
+  }, [generateList]);
 
   useEffect(() => {
     useChromeLocalStorage('hide-offers', {}).then(({ value }) => {
-      setHideOffers(value);
+      generateList(value);
     });
-  }, [setHideOffers]);
+  }, [generateList]);
 
   return (
     <table>
       <thead>
       <tr>
         <th>Key</th>
-        <th>Id</th>
-        <th>Created</th>
+        <th onClick={() => changeOrder('offerId')}>
+          Id
+          {orderBy === 'offerId' && (<SortIcon value={direction} />)}
+        </th>
+        <th onClick={() => changeOrder('createdAt')}>
+          Created
+          {orderBy === 'createdAt' && (<SortIcon value={direction} />)}
+        </th>
         <th>Action</th>
       </tr>
       </thead>
       <tbody>
-      {Object.entries(hideOffers).map(([offerId, { href, createdAt }], key) => (
+      {hideOffers.map(({ offerId, href, createdAt }, key) => (
         <tr>
           <td>{key + 1}</td>
           <td><a href={href}>{offerId}</a></td>
